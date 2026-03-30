@@ -10,10 +10,10 @@ Projet personnel à l’intersection du naturalisme et du développement mobile,
 
 ## 📸 Aperçu de l'application
 
-<img src="screenshots/home-manuel.jpg" width="300">
-<img src="screenshots/resultat-manuel.jpg" width="300">
-<img src="screenshots/gps-scan.jpg" width="300">
-<img src="screenshots/resultat-gps.jpg" width="300">
+<div><img src="screenshots/home-manuel.jpg" width="150">
+<img src="screenshots/resultat-manuel.jpg" width="150"></div><br>
+<div><img src="screenshots/gps-scan.jpg" width="150">
+<img src="screenshots/resultat-gps.jpg" width="150"></div>
 
 ## 🌍 Fonctionnement
 
