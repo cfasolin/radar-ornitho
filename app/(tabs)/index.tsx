@@ -1,50 +1,40 @@
 import * as Location from 'expo-location';
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { speciesData } from '../../data/speciesData';
+
+type Milieu =   
+  | 'urbain'
+  | 'urbain_vegetalise'
+  | 'foret'
+  | 'prairie'
+  | 'prairie_arboree'
+  | 'zone_humide'
+  | 'plan_eau'
+  | 'cultures'
+  | 'fourres'
+  | 'mosaique';
+
+type Altitude = 'basse' | 'moyenne' | 'haute';
+type Saison = 'printemps' | 'ete' | 'automne' | 'hiver';
+type Mode = 'manuel' | 'gps';
 
 export default function HomeScreen() {
-  const [milieu, setMilieu] = useState(null);
-  const [coords, setCoords] = useState(null);
+  const [mode, setMode] = useState<Mode>('manuel');
+  const [milieu, setMilieu] = useState<Milieu>('urbain');
+  const [altitude, setAltitude] = useState<Altitude>('basse');
+  const [saison, setSaison] = useState<Saison>('printemps');
+  const [coords, setCoords] = useState<Location.LocationObjectCoords | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // Traduction classes WorldCover → milieu
-  function classToMilieu(code) {
-    if (code === 10) return 'Forêt dense';
-    if (code === 20) return 'Fourrés / arbustes';
-    if (code === 30) return 'Prairie';
-    if (code === 40) return 'Cultures';
-    if (code === 50) return 'Urbain';
-    if (code === 80) return 'Plan d’eau';
-    if (code === 90) return 'Zone humide';
-    return 'Inconnu';
-  }
-
-  // Espèces par milieu
-  function getEspeces(m) {
-    if (m === 'Forêt dense')
-      return ['Pouillot siffleur', 'Pic noir', 'Roitelet huppé'];
-
-    if (m === 'Prairie')
-      return ['Alouette des champs', 'Tarier pâtre', 'Bruant jaune'];
-
-    if (m === 'Zone humide')
-      return ['Rousserolle effarvatte', 'Héron cendré', 'Canard colvert'];
-
-    if (m === 'Plan d’eau')
-      return ['Grèbe huppé', 'Foulque macroule', 'Sarcelle d’hiver'];
-
-    if (m === 'Fourrés / arbustes')
-      return ['Fauvette grisette', 'Linotte mélodieuse'];
-
-    return [];
+  function getSpecies(m: Milieu, a: Altitude, s: Saison): string[] {
+    return (speciesData as any)[m]?.[a]?.[s] || [];
   }
 
   async function scanLocation() {
     setLoading(true);
 
-    // Permission GPS
-    const { status } =
-      await Location.requestForegroundPermissionsAsync();
+    const { status } = await Location.requestForegroundPermissionsAsync();
 
     if (status !== 'granted') {
       alert('Permission GPS refusée');
@@ -52,12 +42,10 @@ export default function HomeScreen() {
       return;
     }
 
-    // Récupère position
     const location = await Location.getCurrentPositionAsync({});
     setCoords(location.coords);
 
     try {
-      // Appel proxy WorldCover
       const response = await fetch(
         'http://192.168.1.11:3000/worldcover?lat=' +
           location.coords.latitude +
@@ -67,84 +55,285 @@ export default function HomeScreen() {
 
       const data = await response.json();
 
-      const milieuDetecte = classToMilieu(data.class);
-      setMilieu(milieuDetecte);
+      const milieuDetecte = data.habitat as Milieu;
 
+      setMilieu(milieuDetecte);
     } catch (error) {
       alert('Erreur connexion proxy');
       console.log(error);
-    }
-
+    };
+ 
     setLoading(false);
   }
 
+  const especes = getSpecies(milieu, altitude, saison);
+
   return (
-    <View style={styles.container}>
+    <ScrollView
+      style={styles.screen}
+      contentContainerStyle={styles.container}
+      showsVerticalScrollIndicator={true}
+    >
       <Text style={styles.title}>Radar ornithologique</Text>
 
-      <Pressable style={styles.button} onPress={scanLocation}>
-        <Text style={styles.buttonText}>Scanner ici</Text>
-      </Pressable>
+      <Text style={styles.sectionTitle}>Mode</Text>
+      <View style={styles.row}>
+        <Pressable
+          style={[styles.button, mode === 'manuel' && styles.activeButton]}
+          onPress={() => setMode('manuel')}
+        >
+          <Text style={styles.buttonText}>Manuel</Text>
+        </Pressable>
 
-      {loading && <Text>Analyse occupation des sols…</Text>}
+        <Pressable
+          style={[styles.button, mode === 'gps' && styles.activeButton]}
+          onPress={() => setMode('gps')}
+        >
+          <Text style={styles.buttonText}>GPS</Text>
+        </Pressable>
+      </View>
 
-      {coords && (
-        <Text style={styles.coords}>
-          {coords.latitude.toFixed(3)} /{' '}
-          {coords.longitude.toFixed(3)}
-        </Text>
+      {mode === 'gps' && (
+        <>
+          <Pressable style={styles.scanButton} onPress={scanLocation}>
+            <Text style={styles.buttonText}>Scanner ici</Text>
+          </Pressable>
+
+          {loading && <Text style={styles.info}>Analyse du milieu…</Text>}
+
+          {coords && (
+            <Text style={styles.info}>
+              {coords.latitude.toFixed(4)} / {coords.longitude.toFixed(4)}
+            </Text>
+          )}
+        </>
       )}
 
-      {milieu && (
-        <View style={styles.result}>
-          <Text style={styles.subtitle}>
-            Milieu détecté : {milieu}
-          </Text>
+            <Text style={styles.sectionTitle}>Milieu</Text>
+      <View style={styles.row}>
+        <Pressable
+          style={[styles.button, milieu === 'urbain' && styles.activeButton]}
+          onPress={() => setMilieu('urbain')}
+        >
+          <Text style={styles.buttonText}>Urbain</Text>
+        </Pressable>
 
-          {getEspeces(milieu).map((oiseau, index) => (
+        <Pressable
+          style={[styles.button, milieu === 'urbain_vegetalise' && styles.activeButton]}
+          onPress={() => setMilieu('urbain_vegetalise')}
+        >
+          <Text style={styles.buttonText}>Urbain végétalisé</Text>
+        </Pressable>
+      </View>
+
+      <View style={styles.row}>
+        <Pressable
+          style={[styles.button, milieu === 'foret' && styles.activeButton]}
+          onPress={() => setMilieu('foret')}
+        >
+          <Text style={styles.buttonText}>Forêt</Text>
+        </Pressable>
+
+        <Pressable
+          style={[styles.button, milieu === 'prairie' && styles.activeButton]}
+          onPress={() => setMilieu('prairie')}
+        >
+          <Text style={styles.buttonText}>Prairie</Text>
+        </Pressable>
+      </View>
+
+      <View style={styles.row}>
+        <Pressable
+          style={[styles.button, milieu === 'prairie_arboree' && styles.activeButton]}
+          onPress={() => setMilieu('prairie_arboree')}
+        >
+          <Text style={styles.buttonText}>Prairie arborée</Text>
+        </Pressable>
+
+        <Pressable
+          style={[styles.button, milieu === 'zone_humide' && styles.activeButton]}
+          onPress={() => setMilieu('zone_humide')}
+        >
+          <Text style={styles.buttonText}>Zone humide</Text>
+        </Pressable>
+      </View>
+
+      <View style={styles.row}>
+        <Pressable
+          style={[styles.button, milieu === 'plan_eau' && styles.activeButton]}
+          onPress={() => setMilieu('plan_eau')}
+        >
+          <Text style={styles.buttonText}>Plan d’eau</Text>
+        </Pressable>
+
+        <Pressable
+          style={[styles.button, milieu === 'cultures' && styles.activeButton]}
+          onPress={() => setMilieu('cultures')}
+        >
+          <Text style={styles.buttonText}>Cultures</Text>
+        </Pressable>
+      </View>
+
+      <View style={styles.row}>
+        <Pressable
+          style={[styles.button, milieu === 'fourres' && styles.activeButton]}
+          onPress={() => setMilieu('fourres')}
+        >
+          <Text style={styles.buttonText}>Fourrés</Text>
+        </Pressable>
+
+        <Pressable
+          style={[styles.button, milieu === 'mosaique' && styles.activeButton]}
+          onPress={() => setMilieu('mosaique')}
+        >
+          <Text style={styles.buttonText}>Mosaïque</Text>
+        </Pressable>
+      </View>
+
+      <Text style={styles.sectionTitle}>Altitude</Text>
+      <View style={styles.row}>
+        <Pressable
+          style={[styles.button, altitude === 'basse' && styles.activeButton]}
+          onPress={() => setAltitude('basse')}
+        >
+          <Text style={styles.buttonText}>Basse</Text>
+        </Pressable>
+
+        <Pressable
+          style={[styles.button, altitude === 'moyenne' && styles.activeButton]}
+          onPress={() => setAltitude('moyenne')}
+        >
+          <Text style={styles.buttonText}>Moyenne</Text>
+        </Pressable>
+
+        <Pressable
+          style={[styles.button, altitude === 'haute' && styles.activeButton]}
+          onPress={() => setAltitude('haute')}
+        >
+          <Text style={styles.buttonText}>Haute</Text>
+        </Pressable>
+      </View>
+
+      <Text style={styles.sectionTitle}>Saison</Text>
+      <View style={styles.row}>
+        <Pressable
+          style={[styles.button, saison === 'printemps' && styles.activeButton]}
+          onPress={() => setSaison('printemps')}
+        >
+          <Text style={styles.buttonText}>Printemps</Text>
+        </Pressable>
+
+        <Pressable
+          style={[styles.button, saison === 'ete' && styles.activeButton]}
+          onPress={() => setSaison('ete')}
+        >
+          <Text style={styles.buttonText}>Été</Text>
+        </Pressable>
+      </View>
+
+      <View style={styles.row}>
+        <Pressable
+          style={[styles.button, saison === 'automne' && styles.activeButton]}
+          onPress={() => setSaison('automne')}
+        >
+          <Text style={styles.buttonText}>Automne</Text>
+        </Pressable>
+
+        <Pressable
+          style={[styles.button, saison === 'hiver' && styles.activeButton]}
+          onPress={() => setSaison('hiver')}
+        >
+          <Text style={styles.buttonText}>Hiver</Text>
+        </Pressable>
+      </View>
+
+      <View style={styles.result}>
+        <Text style={styles.subtitle}>Configuration actuelle :</Text>
+        <Text>Mode : {mode}</Text>
+        <Text>Milieu : {milieu}</Text>
+        <Text>Altitude : {altitude}</Text>
+        <Text>Saison : {saison}</Text>
+
+        <Text style={[styles.subtitle, { marginTop: 16 }]}>Espèces proposées :</Text>
+
+        {especes.length > 0 ? (
+          especes.map((oiseau: string, index: number) => (
             <Text key={index}>• {oiseau}</Text>
-          ))}
-        </View>
-      )}
-    </View>
+          ))
+        ) : (
+          <Text>Aucune espèce renseignée pour cette combinaison.</Text>
+        )}
+      </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  screen: {
     flex: 1,
     backgroundColor: '#e8f2ee',
-    alignItems: 'center',
-    justifyContent: 'center',
+  },
+  container: {
+    paddingTop: 60,
+    paddingHorizontal: 20,
+    paddingBottom: 80,
   },
   title: {
     fontSize: 26,
     fontWeight: 'bold',
     color: '#1f4d3a',
-    marginBottom: 30,
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginTop: 16,
+    marginBottom: 8,
+    color: '#1f4d3a',
+  },
+  row: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 8,
   },
   button: {
     backgroundColor: '#2f6f55',
-    paddingVertical: 14,
-    paddingHorizontal: 30,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
     borderRadius: 8,
+  },
+  scanButton: {
+    backgroundColor: '#1f4d3a',
+    paddingVertical: 12,
+    paddingHorizontal: 18,
+    borderRadius: 8,
+    marginBottom: 12,
+    alignSelf: 'flex-start',
+  },
+  activeButton: {
+    backgroundColor: '#174232',
   },
   buttonText: {
     color: 'white',
-    fontSize: 18,
+    fontSize: 14,
     fontWeight: 'bold',
   },
-  coords: {
-    marginTop: 20,
-    fontSize: 12,
-    color: '#555',
+  info: {
+    marginBottom: 8,
+    color: '#444',
   },
   result: {
-    marginTop: 20,
-    alignItems: 'center',
+    marginTop: 24,
+    marginBottom: 30,
+    padding: 16,
+    backgroundColor: '#ffffffaa',
+    borderRadius: 10,
   },
   subtitle: {
     fontWeight: 'bold',
-    marginBottom: 10,
+    marginBottom: 8,
+    color: '#1f4d3a',
   },
 });
