@@ -49,6 +49,10 @@ Mobile → API proxy → Raster satellite → Classe sol → Habitat → Espèce
 * Intégrer base espèces Haute-Loire
 
 ---
+## 🤖 Méthodologie
+
+Ce projet a été développé en autonomie avec l'IA pour accélérer l'apprentissage et la résolution de problèmes techniques.
+L'accent a été mis sur la compréhension des concepts (API, géolocalisation, données raster, architecture) et leur application à un cas concret en ornithologie.
 
 ## 👤 Auteur
 
