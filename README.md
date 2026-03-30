@@ -85,4 +85,4 @@ L’accent a été mis sur la compréhension des concepts (API, géolocalisation
 
 ## 👤 Auteur
 
-Projet personnel – apprentissage développement web/mobile avec orientation naturaliste
+Projet personnel – apprentissage du développement web/mobile avec orientation naturaliste
