@@ -1,50 +1,55 @@
-# Welcome to your Expo app 👋
+# 🐦 Radar ornithologique – application mobile
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+## 📱 Description
 
-## Get started
+Application Android permettant de suggérer les espèces d’oiseaux probables en fonction de la position GPS, de l’occupation des sols, de l’altitude et de la saison.
 
-1. Install dependencies
+Projet personnel orienté naturalisme et développement mobile.
 
-   ```bash
-   npm install
-   ```
+---
 
-2. Start the app
+## 🌍 Fonctionnement
 
-   ```bash
-   npx expo start
-   ```
+1. Récupération de la position GPS
+2. Interrogation d’un proxy Node.js
+3. Lecture d’un raster WorldCover (ESA)
+4. Détection du type de milieu
+5. Suggestion d’espèces probables
 
-In the output, you'll find options to open the app in a
+---
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+## 🧠 Technologies utilisées
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+* React Native (Expo)
+* Node.js / Express
+* GeoTIFF (WorldCover ESA)
+* API REST (JSON)
 
-## Get a fresh project
+---
 
-When you're ready, run:
+## 🗺️ Architecture
 
-```bash
-npm run reset-project
-```
+Mobile → API proxy → Raster satellite → Classe sol → Habitat → Espèces
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+---
 
-## Learn more
+## ⚠️ État du projet
 
-To learn more about developing your project with Expo, look at the following resources:
+* Proxy local (pas encore déployé)
+* Base espèces en cours de construction
+* Fonctionne en environnement de développement
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+---
 
-## Join the community
+## 🚀 Objectifs
 
-Join our community of developers creating universal apps.
+* Ajouter altitude
+* Ajouter saison
+* Améliorer la précision habitat (buffer multi-pixels)
+* Intégrer base espèces Haute-Loire
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+---
+
+## 👤 Auteur
+
+Projet personnel – en apprentissage développement web/mobile
