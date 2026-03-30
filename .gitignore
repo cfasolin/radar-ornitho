@@ -41,3 +41,9 @@ app-example
 # generated native folders
 /ios
 /android
+
+#worldcover raster
+worldcover.tsbuildinfo
+
+#proxy dependencies 
+proxy-worldcover/node_modules

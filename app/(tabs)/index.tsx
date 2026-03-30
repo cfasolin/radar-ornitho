@@ -1,98 +1,150 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
-
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+import * as Location from 'expo-location';
+import { useState } from 'react';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 export default function HomeScreen() {
-  return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+  const [milieu, setMilieu] = useState(null);
+  const [coords, setCoords] = useState(null);
+  const [loading, setLoading] = useState(false);
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+  // Traduction classes WorldCover → milieu
+  function classToMilieu(code) {
+    if (code === 10) return 'Forêt dense';
+    if (code === 20) return 'Fourrés / arbustes';
+    if (code === 30) return 'Prairie';
+    if (code === 40) return 'Cultures';
+    if (code === 50) return 'Urbain';
+    if (code === 80) return 'Plan d’eau';
+    if (code === 90) return 'Zone humide';
+    return 'Inconnu';
+  }
+
+  // Espèces par milieu
+  function getEspeces(m) {
+    if (m === 'Forêt dense')
+      return ['Pouillot siffleur', 'Pic noir', 'Roitelet huppé'];
+
+    if (m === 'Prairie')
+      return ['Alouette des champs', 'Tarier pâtre', 'Bruant jaune'];
+
+    if (m === 'Zone humide')
+      return ['Rousserolle effarvatte', 'Héron cendré', 'Canard colvert'];
+
+    if (m === 'Plan d’eau')
+      return ['Grèbe huppé', 'Foulque macroule', 'Sarcelle d’hiver'];
+
+    if (m === 'Fourrés / arbustes')
+      return ['Fauvette grisette', 'Linotte mélodieuse'];
+
+    return [];
+  }
+
+  async function scanLocation() {
+    setLoading(true);
+
+    // Permission GPS
+    const { status } =
+      await Location.requestForegroundPermissionsAsync();
+
+    if (status !== 'granted') {
+      alert('Permission GPS refusée');
+      setLoading(false);
+      return;
+    }
+
+    // Récupère position
+    const location = await Location.getCurrentPositionAsync({});
+    setCoords(location.coords);
+
+    try {
+      // Appel proxy WorldCover
+      const response = await fetch(
+        'http://192.168.1.11:3000/worldcover?lat=' +
+          location.coords.latitude +
+          '&lon=' +
+          location.coords.longitude
+      );
+
+      const data = await response.json();
+
+      const milieuDetecte = classToMilieu(data.class);
+      setMilieu(milieuDetecte);
+
+    } catch (error) {
+      alert('Erreur connexion proxy');
+      console.log(error);
+    }
+
+    setLoading(false);
+  }
+
+  return (
+    <View style={styles.container}>
+      <Text style={styles.title}>Radar ornithologique</Text>
+
+      <Pressable style={styles.button} onPress={scanLocation}>
+        <Text style={styles.buttonText}>Scanner ici</Text>
+      </Pressable>
+
+      {loading && <Text>Analyse occupation des sols…</Text>}
+
+      {coords && (
+        <Text style={styles.coords}>
+          {coords.latitude.toFixed(3)} /{' '}
+          {coords.longitude.toFixed(3)}
+        </Text>
+      )}
+
+      {milieu && (
+        <View style={styles.result}>
+          <Text style={styles.subtitle}>
+            Milieu détecté : {milieu}
+          </Text>
+
+          {getEspeces(milieu).map((oiseau, index) => (
+            <Text key={index}>• {oiseau}</Text>
+          ))}
+        </View>
+      )}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
+  container: {
+    flex: 1,
+    backgroundColor: '#e8f2ee',
     alignItems: 'center',
-    gap: 8,
+    justifyContent: 'center',
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  title: {
+    fontSize: 26,
+    fontWeight: 'bold',
+    color: '#1f4d3a',
+    marginBottom: 30,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  button: {
+    backgroundColor: '#2f6f55',
+    paddingVertical: 14,
+    paddingHorizontal: 30,
+    borderRadius: 8,
+  },
+  buttonText: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  coords: {
+    marginTop: 20,
+    fontSize: 12,
+    color: '#555',
+  },
+  result: {
+    marginTop: 20,
+    alignItems: 'center',
+  },
+  subtitle: {
+    fontWeight: 'bold',
+    marginBottom: 10,
   },
 });
