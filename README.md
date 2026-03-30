@@ -8,6 +8,13 @@ Projet personnel à l’intersection du naturalisme et du développement mobile,
 
 ---
 
+## 📸 Aperçu de l'application
+
+![Mode manuel](screenshots/home-manuel.jpg)
+![Resultat manuel](screenshots/resultat-manuel.jpg)
+![Mode GPS](screenshots/gps-scan.jpg)
+![Resultat GPS](screenshots/resultat-gps.jpg)
+
 ## 🌍 Fonctionnement
 
 1. Récupération de la position GPS
@@ -70,7 +77,7 @@ Mobile → API proxy → Raster satellite → Distribution des classes → Habit
 
 ## 🤖 Méthodologie
 
-Ce projet a été développé en autonomie avec l’utilisation d’outils d’assistance (IA) pour accélérer l’apprentissage et la résolution de problèmes techniques.
+Ce projet a été développé en autonomie avec l’IA pour accélérer l’apprentissage et la résolution de problèmes techniques.
 
 L’accent a été mis sur la compréhension des concepts (API, géolocalisation, données raster), leur application à un cas concret en écologie, la construction progressive d’un modèle de prédiction simple
 
