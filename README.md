@@ -46,7 +46,7 @@ Mobile → API proxy → Raster satellite → Classe sol → Habitat → Espèce
 * Ajouter altitude
 * Ajouter saison
 * Améliorer la précision habitat (buffer multi-pixels)
-* Intégrer base espèces Haute-Loire
+* Intégrer les données réellement observées
 
 ---
 ## 🤖 Méthodologie
